@@ -1,0 +1,490 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scoutable — football scouting platform</title>
+<meta name="description" content="A data-driven scouting platform for 17 under-scouted football leagues across Africa, the Gulf and Asia-Pacific. Data pipeline, entity resolution, player-DNA vector search, an XGBoost fair-value model and a grounded RAG assistant.">
+<meta property="og:title" content="Scoutable — football scouting platform">
+<meta property="og:description" content="Scouting and talent identification for 17 under-scouted leagues: 9,977 players, a fair-value model, DNA similarity search and a grounded assistant.">
+<meta property="og:type" content="website">
+<style>
+  :root{
+    --bg:#08090b; --surface:#0e1013; --surface-2:#14171c; --line:#1e2228;
+    --line-strong:#2a2f37; --text:#f2f4f7; --muted:#9aa3af; --faint:#6b7280;
+    --accent:#f5333f; --green:#34d399; --blue:#60a5fa; --amber:#fbbf24;
+    --mono:ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,monospace;
+    --sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --wrap:1120px;
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0;background:var(--bg);color:var(--text);font-family:var(--sans);
+    font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased;
+  }
+  img{max-width:100%;display:block}
+  a{color:inherit}
+  .wrap{max-width:var(--wrap);margin:0 auto;padding:0 24px}
+
+  .eyebrow{
+    font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;
+    color:var(--accent);margin:0 0 14px;
+  }
+  .eyebrow.dim{color:var(--faint)}
+  h1,h2,h3{margin:0;line-height:1.05;letter-spacing:-.035em;font-weight:800}
+  h1{font-size:clamp(40px,7vw,76px)}
+  h2{font-size:clamp(28px,4.2vw,44px);letter-spacing:-.03em}
+  h3{font-size:19px;letter-spacing:-.015em;font-weight:700;line-height:1.3}
+  p{margin:0 0 16px}
+  .lede{font-size:clamp(17px,2.1vw,20px);color:var(--muted);max-width:62ch}
+  .muted{color:var(--muted)}
+  .small{font-size:14px}
+
+  /* ---------- header ---------- */
+  header.top{
+    position:sticky;top:0;z-index:20;background:rgba(8,9,11,.86);
+    backdrop-filter:blur(10px);border-bottom:1px solid var(--line);
+  }
+  .topin{display:flex;align-items:center;gap:14px;height:62px}
+  .logo{display:flex;align-items:center;gap:11px;font-weight:800;letter-spacing:-.02em;font-size:17px}
+  .mark{
+    width:30px;height:30px;border-radius:9px;background:var(--accent);color:#fff;
+    display:grid;place-items:center;font-size:16px;font-weight:800;flex:none;
+  }
+  .topnav{margin-left:auto;display:flex;gap:8px;align-items:center}
+
+  .btn{
+    display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:11px;
+    font-size:14px;font-weight:650;text-decoration:none;border:1px solid var(--line-strong);
+    color:var(--text);background:var(--surface-2);white-space:nowrap;
+    transition:border-color .15s ease, background .15s ease, transform .15s ease;
+  }
+  .btn:hover{border-color:#3d444e;background:#1a1e24}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  .btn.primary:hover{background:#ff4550;border-color:#ff4550}
+  .btn.sm{padding:8px 14px;font-size:13px}
+
+  /* ---------- hero ---------- */
+  .hero{padding:78px 0 8px;border-bottom:1px solid var(--line)}
+  .hero h1{margin-bottom:22px}
+  .hero .lede{margin-bottom:30px}
+  .cta{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+  .note{font-size:13px;color:var(--faint);margin:0}
+
+  .stats{
+    display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--line);
+    border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-top:54px;
+  }
+  .stat{background:var(--bg);padding:24px 20px}
+  .stat .n{font-size:clamp(24px,3.4vw,34px);font-weight:800;letter-spacing:-.03em;line-height:1}
+  .stat .l{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--faint);margin-top:9px}
+  .stat.accent .n{color:var(--accent)}
+
+  /* ---------- sections ---------- */
+  section{padding:76px 0;border-bottom:1px solid var(--line)}
+  .shead{margin-bottom:38px;max-width:70ch}
+  .shead h2{margin-bottom:14px}
+
+  .shot{
+    border:1px solid var(--line-strong);border-radius:14px;overflow:hidden;background:var(--surface);
+    box-shadow:0 20px 60px rgba(0,0,0,.5);
+  }
+  .shot img{width:100%}
+  .cap{
+    font-size:13px;color:var(--faint);margin-top:12px;font-family:var(--mono);
+    letter-spacing:.02em;
+  }
+
+  .feat{display:grid;grid-template-columns:1fr 1fr;gap:52px;align-items:center;margin-bottom:72px}
+  .feat:last-child{margin-bottom:0}
+  .feat.rev .txt{order:2}
+  .feat h3{margin-bottom:12px}
+  .feat p{color:var(--muted);font-size:15px}
+  .tag{
+    display:inline-block;font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;
+    text-transform:uppercase;padding:4px 9px;border-radius:6px;margin-bottom:14px;
+    border:1px solid var(--line-strong);color:var(--muted);
+  }
+  .tag.silver{color:#cbd5e1;border-color:#3a4250}
+  .tag.gold{color:var(--amber);border-color:#4a3d1a}
+  .tag.free{color:var(--green);border-color:#1d4438}
+
+  ul.ticks{list-style:none;padding:0;margin:16px 0 0}
+  ul.ticks li{
+    position:relative;padding-left:22px;margin-bottom:9px;font-size:14.5px;color:var(--muted);
+  }
+  ul.ticks li::before{
+    content:"";position:absolute;left:0;top:9px;width:9px;height:9px;border-radius:2px;
+    background:var(--accent);opacity:.85;
+  }
+  ul.ticks li b{color:var(--text);font-weight:650}
+
+  /* ---------- grid cards ---------- */
+  .grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line)}
+  .cell{background:var(--bg);padding:28px 24px}
+  .cell h3{margin-bottom:10px;font-size:17px}
+  .cell p{font-size:14.5px;color:var(--muted);margin:0}
+
+  /* ---------- architecture ---------- */
+  pre.arch{
+    font-family:var(--mono);font-size:12.5px;line-height:1.75;color:var(--muted);
+    background:var(--surface);border:1px solid var(--line-strong);border-radius:12px;
+    padding:24px;overflow-x:auto;margin:0;
+  }
+  pre.arch b{color:var(--text);font-weight:600}
+
+  table{width:100%;border-collapse:collapse;font-size:14.5px}
+  .tscroll{overflow-x:auto}
+  th,td{text-align:left;padding:13px 16px;border-bottom:1px solid var(--line)}
+  th{
+    font-family:var(--mono);font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;
+    color:var(--faint);font-weight:500;
+  }
+  td b{font-weight:650}
+  td.mut{color:var(--muted)}
+
+  /* ---------- decisions ---------- */
+  .dec{border-left:2px solid var(--line-strong);padding:2px 0 2px 22px;margin-bottom:30px}
+  .dec:last-child{margin-bottom:0}
+  .dec h3{margin-bottom:8px;font-size:16.5px}
+  .dec p{font-size:14.5px;color:var(--muted);margin:0}
+  .dec code{
+    font-family:var(--mono);font-size:12.5px;background:var(--surface-2);
+    padding:2px 6px;border-radius:5px;color:#e5e7eb;
+  }
+
+  /* ---------- stack ---------- */
+  .stack{display:grid;grid-template-columns:repeat(2,1fr);gap:34px}
+  .stack h3{font-size:13px;font-family:var(--mono);letter-spacing:.13em;text-transform:uppercase;color:var(--faint);font-weight:500;margin-bottom:14px}
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .chip{
+    font-size:13px;padding:6px 12px;border-radius:8px;background:var(--surface-2);
+    border:1px solid var(--line);color:var(--muted);
+  }
+
+  /* ---------- demo box ---------- */
+  .demo{
+    border:1px solid var(--line-strong);border-radius:14px;background:var(--surface);
+    padding:26px 28px;display:grid;grid-template-columns:1fr auto;gap:26px;align-items:center;
+  }
+  .demo h3{margin-bottom:8px}
+  .demo p{margin:0;font-size:14.5px;color:var(--muted)}
+  .creds{font-family:var(--mono);font-size:13px;color:var(--text);margin-top:12px;line-height:1.9}
+  .creds span{color:var(--faint)}
+
+  footer{padding:52px 0 68px}
+  .foot{display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;align-items:center}
+  .foot a{color:var(--muted);text-decoration:none;font-size:14px}
+  .foot a:hover{color:var(--text)}
+
+  @media (max-width:900px){
+    .stats{grid-template-columns:repeat(2,1fr)}
+    .stat:last-child{grid-column:1/-1}
+    .feat{grid-template-columns:1fr;gap:26px;margin-bottom:56px}
+    .feat.rev .txt{order:0}
+    .grid3{grid-template-columns:1fr}
+    .stack{grid-template-columns:1fr}
+    .demo{grid-template-columns:1fr}
+    section{padding:56px 0}
+    .hero{padding:52px 0 8px}
+    .topnav .hidesm{display:none}
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap topin">
+    <div class="logo"><span class="mark">S</span> Scoutable</div>
+    <nav class="topnav">
+      <a class="btn sm hidesm" href="https://github.com/EyaAzzabi/scoutable">Repository</a>
+      <a class="btn sm primary" href="https://cam-pitch-discovery-extras.trycloudflare.com/">Live demo →</a>
+    </nav>
+  </div>
+</header>
+
+<div class="hero">
+  <div class="wrap">
+    <p class="eyebrow">Summer 2026 internship · OPTO Lab</p>
+    <h1>Scouting the leagues<br>nobody else models.</h1>
+    <p class="lede">
+      Clubs have deep analytics for the Big Five European leagues and almost nothing for the
+      leagues that actually produce cheap talent. Scoutable covers <b>17 leagues across Africa,
+      the Gulf and Asia-Pacific</b> — and turns them into a searchable, rankable, explainable
+      recruitment desk.
+    </p>
+    <div class="cta">
+      <a class="btn primary" href="https://cam-pitch-discovery-extras.trycloudflare.com/">Open the live demo →</a>
+      <a class="btn" href="https://github.com/EyaAzzabi/scoutable">Read the technical README</a>
+    </div>
+    <p class="note">Built end-to-end: data pipeline, entity resolution, ML models, RAG assistant, API, SPA, billing and deployment. Source is private (OPTO Lab).</p>
+
+    <div class="stats">
+      <div class="stat"><div class="n">9,977</div><div class="l">Players</div></div>
+      <div class="stat"><div class="n">273</div><div class="l">Clubs</div></div>
+      <div class="stat"><div class="n">17</div><div class="l">Leagues</div></div>
+      <div class="stat accent"><div class="n">3,163</div><div class="l">Under-priced finds</div></div>
+      <div class="stat"><div class="n">€3.51B</div><div class="l">Market value tracked</div></div>
+    </div>
+  </div>
+</div>
+
+<section>
+  <div class="wrap">
+    <div class="shot"><img src="img/dashboard.png" alt="Scoutable dashboard: live counts and an opportunity board ranking players by the gap between market value and the model's fair value." loading="lazy" width="2880" height="1800"></div>
+    <p class="cap">/dashboard — the opportunity board, ranked by how much money the model says is on the table.</p>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="shead">
+      <p class="eyebrow dim">01 — What it does</p>
+      <h2>Six surfaces, one model underneath.</h2>
+      <p class="lede">Every board reads from the same golden records, the same DNA vectors and the same fair-value model. Plans decide which of them you can open.</p>
+    </div>
+
+    <div class="feat">
+      <div class="txt">
+        <span class="tag silver">Silver</span>
+        <h3>A recommendation engine that shows its working</h3>
+        <p>
+          Describe a <b>need</b>, a <b>budget</b> and optionally a <b>playstyle target</b>, and every
+          result breaks into three visible bars rather than collapsing into one score — because a
+          scout has to be able to disagree with the model on a specific axis.
+        </p>
+        <ul class="ticks">
+          <li><b>fit</b> — cosine distance from the requested DNA profile</li>
+          <li><b>quality</b> — percentile within the player's own peer group</li>
+          <li><b>value</b> — market price against the model's fair value</li>
+        </ul>
+      </div>
+      <div><div class="shot"><img src="img/recommend.png" alt="Ranked recommendation cards, each with quality and value-for-money bars and an under-priced badge." loading="lazy"></div></div>
+    </div>
+
+    <div class="feat rev">
+      <div class="txt">
+        <span class="tag free">Free</span>
+        <h3>Profiles ranked against a real peer group</h3>
+        <p>
+          Percentiles are computed against players in the <b>same role and the same league</b>, never
+          a global pool. Each merged record carries a <b>confidence score</b>, so a profile stitched
+          from three disagreeing sources never pretends to be as solid as one where they agree.
+        </p>
+      </div>
+      <div><div class="shot"><img src="img/player-profile.png" alt="Player profile showing market value against model fair value, a value-for-money verdict, a confidence bar and percentile rankings." loading="lazy"></div></div>
+    </div>
+
+    <div class="feat">
+      <div class="txt">
+        <span class="tag gold">Gold</span>
+        <h3>The contract-expiry radar</h3>
+        <p>
+          Players running down their contracts, soonest first — the ones who can be signed for a fee
+          of zero if you move before somebody else does, each with the same fair-value verdict
+          attached.
+        </p>
+      </div>
+      <div><div class="shot"><img src="img/free-agents.png" alt="Contract expiries board listing players by contract end date with free-agent status and value-for-money badges." loading="lazy"></div></div>
+    </div>
+
+    <div class="feat rev">
+      <div class="txt">
+        <span class="tag gold">Gold</span>
+        <h3>An assistant that can only answer from the data</h3>
+        <p>
+          It never writes SQL. It supplies <i>values</i> against a typed schema that compile to a
+          parameterised query with a hard row cap, and every player it names is cited by id — with an
+          eval that fails the build if it cites one it did not actually retrieve.
+        </p>
+        <ul class="ticks">
+          <li>Seven retrieval tools; <b>routing is the model's tool choice</b></li>
+          <li>Notes embedded <b>locally</b> (MiniLM, 384-dim) into pgvector — no key, no per-call cost</li>
+          <li>Note text fenced as untrusted, with an <b>injection</b> case in the eval set</li>
+          <li>Redis tool cache: a repeat question goes <b>2,134 ms → 1.3 ms</b></li>
+        </ul>
+      </div>
+      <div><div class="shot"><img src="img/assistant.png" alt="The assistant workspace answering a scouting question with players cited by id." loading="lazy"></div></div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="shead">
+      <p class="eyebrow dim">02 — How the data gets there</p>
+      <h2>Three sources that share no identifier.</h2>
+      <p class="lede">
+        Each source is an isolated adapter that stores its verbatim payload in a raw zone first —
+        auditable and replayable, so a parser bug is fixed by re-normalising rather than re-scraping.
+      </p>
+    </div>
+
+<pre class="arch">                 scrape                    resolve                 analyze                serve
+Transfermarkt ─┐                                             ┌─ team style ──┐
+FBref ─────────┤─► <b>raw zone</b> ─► normalize ─► <b>entity</b> ─────────►┤─ golden record ┤─► <b>DNA</b> (pgvector) ─► recommend API
+Sofascore ─────┘  (SourceRecord)  (Club/Player)  <b>resolution</b>  │  + confidence  │   value model      (fit × quality × value)
+                                                             └─ name variants ┘</pre>
+
+    <div class="grid3" style="margin-top:34px">
+      <div class="cell">
+        <h3>Entity resolution</h3>
+        <p>Birth-year blocking → RapidFuzz name scoring → a club crosswalk → a merged golden record with a confidence value. Anything below threshold goes to a <b>human review queue</b> rather than being silently guessed, and precision/recall are scored against a hand-built gold set.</p>
+      </div>
+      <div class="cell">
+        <h3>Player DNA</h3>
+        <p>21 dimensions — 11 numeric plus 8 position sub-role one-hots — z-scored <b>within each league</b>, L2-normalised, stored in pgvector behind an HNSW cosine index. Search is role-gated, and neighbours measure ~40% closer in rating than random.</p>
+      </div>
+      <div class="cell">
+        <h3>Fair value</h3>
+        <p>An XGBoost regressor predicts what a player <i>should</i> cost given age, role, output, minutes and league strength. The residual is the arbitrage signal — currently 3,163 players priced below what the model expects.</p>
+      </div>
+    </div>
+
+    <div class="tscroll" style="margin-top:34px">
+      <table>
+        <thead><tr><th>Source</th><th>What it provides</th></tr></thead>
+        <tbody>
+          <tr><td><b>Transfermarkt</b></td><td class="mut">Squads, bio, market value, contracts, height / foot / birthplace</td></tr>
+          <tr><td><b>FBref</b></td><td class="mut">Season statistics — appearances, minutes, goals, per-90s</td></tr>
+          <tr><td><b>Sofascore</b></td><td class="mut">Match results, per-player rating, and real event stats (xG, key passes, aerials, tackles)</td></tr>
+          <tr><td><b>golden-*</b></td><td class="mut">The merged best-of record per player-season, plus an agreement flag</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="shead">
+      <p class="eyebrow dim">03 — Decisions</p>
+      <h2>The parts that were judgement, not typing.</h2>
+    </div>
+
+    <div class="dec">
+      <h3>The paywall has exactly one source of truth</h3>
+      <p>The feature matrix lives in a single module and is served verbatim by <code>GET /billing/plans</code>. The ticks on the pricing page and the gate the API enforces are literally the same table, so they cannot drift. Adding a feature is one row — pricing, nav locks and the API gate all follow.</p>
+    </div>
+    <div class="dec">
+      <h3>Gating returns 402, not 403</h3>
+      <p>A signed-in user on too small a plan gets a payload naming the feature and the plan that unlocks it — enough for the UI to render an upgrade panel where the data would have been. Frontend gating is UX only; the same key is enforced server-side, so editing local state gets you a 402 rather than data.</p>
+    </div>
+    <div class="dec">
+      <h3>Refresh tokens are opaque, hashed and rotated on every use</h3>
+      <p>A stolen token works at most once, and the theft surfaces as an unexpected sign-out. <code>current_user</code> re-reads the user row instead of trusting the plan claim in the JWT, so a downgrade or a ban takes effect immediately rather than at token expiry.</p>
+    </div>
+    <div class="dec">
+      <h3>The sign-in throttle keys on IP, not e-mail</h3>
+      <p>Keying on the e-mail address would let an attacker lock a known victim out of their own account.</p>
+    </div>
+    <div class="dec">
+      <h3>Stripe's webhook moves a user between plans — never the redirect</h3>
+      <p>The redirect back from Checkout only proves the browser came back; the webhook proves the money settled. With no Stripe key the same endpoints run in demo mode and mark the row <code>plan_status="demo"</code>, so an account upgraded without payment is never mistaken for a paying customer.</p>
+    </div>
+    <div class="dec">
+      <h3>Player portraits pass three independent checks</h3>
+      <p>Photos are hot-linked from third-party CDNs, so a string scraped out of somebody else's HTML ends up in an <code>&lt;img src&gt;</code> in a signed-in user's browser. It is validated on write, on read, and again by CSP in the browser — each layer assuming the others failed. The allowlist is exact-match, not a suffix check, because <code>endswith</code> would happily accept <code>img.transfermarkt.technology.evil.com</code>.</p>
+    </div>
+    <div class="dec">
+      <h3>The image pins <code>xgboost-cpu</code> on Linux on purpose</h3>
+      <p>From XGBoost 3.x the plain wheel hard-depends on the NVIDIA CUDA runtime — <code>nvidia-nccl</code> alone is 252 MB — adding close to a gigabyte to the image and to every deployment pull, for a model that trains and scores on CPU.</p>
+    </div>
+    <div class="dec">
+      <h3>Two visual registers, deliberately</h3>
+      <p>The signed-in app is a card system built for scanning data. The landing page is editorial — mono micro-labels, hairline rules, a much tighter display scale — because a marketing page built out of the app's own cards is what makes a product look templated. Every number on it is live from the API, so the page cannot claim something the database does not back.</p>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="shead">
+      <p class="eyebrow dim">04 — Stack</p>
+      <h2>Python, Postgres and a lot of vectors.</h2>
+    </div>
+    <div class="stack">
+      <div>
+        <h3>Backend</h3>
+        <div class="chips">
+          <span class="chip">Python 3.12</span><span class="chip">FastAPI</span><span class="chip">Typer CLI</span>
+          <span class="chip">SQLAlchemy 2</span><span class="chip">Pydantic v2</span><span class="chip">Alembic</span>
+        </div>
+      </div>
+      <div>
+        <h3>Data</h3>
+        <div class="chips">
+          <span class="chip">PostgreSQL 16</span><span class="chip">pgvector · HNSW</span><span class="chip">Redis</span>
+          <span class="chip">httpx</span><span class="chip">BeautifulSoup</span><span class="chip">RapidFuzz</span><span class="chip">tenacity</span>
+        </div>
+      </div>
+      <div>
+        <h3>ML</h3>
+        <div class="chips">
+          <span class="chip">XGBoost</span><span class="chip">scikit-learn</span><span class="chip">sentence-transformers</span><span class="chip">numpy</span>
+        </div>
+      </div>
+      <div>
+        <h3>Frontend &amp; infra</h3>
+        <div class="chips">
+          <span class="chip">React</span><span class="chip">TypeScript</span><span class="chip">Vite</span><span class="chip">Tailwind v4</span>
+          <span class="chip">TanStack Query</span><span class="chip">Docker Compose</span><span class="chip">Caddy</span><span class="chip">GitHub Actions</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid3" style="margin-top:44px">
+      <div class="cell">
+        <h3>311 backend tests</h3>
+        <p>DB-backed tests run inside a rolled-back transaction. <code>ruff</code> lints, <code>alembic check</code> fails the build on model/migration drift, <code>tsc --noEmit</code> covers the frontend.</p>
+      </div>
+      <div class="cell">
+        <h3>Measured, not asserted</h3>
+        <p>Entity resolution scored against a gold set, recommendation role-purity and quality lift evaluated, DNA neighbour quality quantified, assistant answers checked for citation grounding.</p>
+      </div>
+      <div class="cell">
+        <h3>One-command deploy</h3>
+        <p>The full stack behind Caddy, which provisions and renews TLS itself. Only Caddy publishes ports, so Postgres and Redis are unreachable from the internet. Migrations run on API start; nightly <code>pg_dump</code> with 14-day retention.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="demo">
+      <div>
+        <p class="eyebrow">Try it</p>
+        <h3>Sign up free, or use the demo account</h3>
+        <p>
+          Billing runs in <b>demo mode</b> on this deployment, so upgrading to a paid tier is instant
+          and no card is involved — the Silver and Gold boards are reachable from a fresh sign-up in
+          about a minute.
+        </p>
+        <div class="creds">
+          <span>e-mail</span> &nbsp;demo@scoutable.app<br>
+          <span>password</span> &nbsp;ScoutableDemo2026!
+        </div>
+      </div>
+      <div><a class="btn primary" href="https://cam-pitch-discovery-extras.trycloudflare.com/">Open the demo →</a></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap foot">
+    <div class="small muted">
+      Scoutable — built at OPTO Lab, summer 2026. Source private; this page and the
+      <a href="https://github.com/EyaAzzabi/scoutable" style="color:var(--text)">README</a> document it.
+    </div>
+    <div style="display:flex;gap:18px">
+      <a href="https://github.com/EyaAzzabi">GitHub</a>
+      <a href="https://github.com/EyaAzzabi/scoutable">Repository</a>
+      <a href="https://cam-pitch-discovery-extras.trycloudflare.com/">Live demo</a>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
