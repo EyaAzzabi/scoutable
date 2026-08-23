@@ -1,6 +1,9 @@
 # Scoutable — football scouting & talent-identification platform
 
 **Live demo → https://cam-pitch-discovery-extras.trycloudflare.com/**
+**Project page → https://eyaazzabi.github.io/scoutable/**
+
+![The Scoutable dashboard: live counts and an opportunity board ranking players by the gap between market value and the model's fair value.](docs/img/dashboard.png)
 
 A data-driven scouting platform for **under-scouted football markets**. Clubs and agents
 have deep analytics for the Big Five European leagues and almost nothing for the leagues
@@ -70,6 +73,8 @@ Two narrower entry points sit beside it:
 - **Hidden gems** — cheaper look-alikes to a named star, capped at a budget.
 - **Wonderkids** — young players outperforming their age percentile.
 
+![Ranked recommendation cards, each with quality and value-for-money bars and an under-priced badge.](docs/img/recommend.png)
+
 ### Player DNA & similarity search *(Silver)*
 
 Every player is reduced to a **21-dimension vector**: 11 numeric features (output, xG,
@@ -84,6 +89,8 @@ striker just because their numbers rhyme — and percentile-scaled for readabili
 Quality is measured rather than asserted: `scouting evaluate` checks that DNA neighbours
 are **~40% closer in rating** than randomly sampled players.
 
+![A player profile showing market value against model fair value, a value-for-money verdict, a confidence bar and percentile rankings against a same-role, same-league peer group.](docs/img/player-profile.png)
+
 ### Fair-value model & bargain board *(Silver)*
 
 An **XGBoost** regressor predicts what a player's market value *should* be, given age,
@@ -97,6 +104,8 @@ under-priced players fall visibly below the diagonal. 3,163 players currently si
 
 Players whose contracts run out inside a chosen window, ranked by quality — the ones who
 can be signed for a fee of zero if you move before somebody else does.
+
+![The contract-expiries board, listing players by contract end date with free-agent status and value-for-money badges.](docs/img/free-agents.png)
 
 ### Shortlists
 
