@@ -47,19 +47,44 @@ model's reasoning visible on every card so a human can overrule it.
 
 ### How I know it works
 
-Anyone can ship a model. The part that makes it trustworthy is that **every claim above
-has a command that tests it** — measurement is built into the CLI, not done once in a
-notebook:
+Anyone can ship a model. What makes one trustworthy is that **every claim above has a
+command that tests it** — measurement lives in the CLI, not in a notebook that ran once.
+Real output, South African Premiership:
 
-| Command | What it proves |
+| Command | Measured |
 |---|---|
-| `scouting evaluate` | DNA neighbours are **~40% closer in rating** than randomly sampled players — the embedding encodes real similarity, not noise |
-| `scouting er-eval` | Entity-resolution **precision and recall** against a hand-built gold set of known player matches |
-| `scouting reco-eval` | Recommendation **role-purity** and **quality lift** — that the ranker returns the position asked for, and better players than chance |
-| `scouting chat-eval` | The assistant **only cites players it actually retrieved** (a hallucination check) and survives a **prompt-injection** case |
-| `scouting dq` | Data-quality gate: nulls, ranges, duplicates — with caveats surfaced rather than imputed away |
+| `scouting evaluate` | **364 players, k=5. Role purity 100%.** Neighbour rating gap **0.136 vs 0.235** random — DNA neighbours are **42% closer in rating** than chance. Value gap 349k vs 418k. |
+| `scouting reco-eval` | **Role purity 100%** across all 8 roles. **Mean quality lift +0.172** over the league average of 6.74, positive for every role. |
+| `scouting er-eval` | 470 gold pairs, **precision 1.00 / recall 1.00** — see the caveat below, which matters more than the number. |
+| `scouting dq` | 595 players, **0 errors**, 3 warnings: 11.3% lack a birthdate, 10.6% a market value, 45% a height. |
+| `scouting chat-eval` | The assistant **only cites players it actually retrieved** (hallucination check) and survives a **prompt-injection** case. |
 
-Low-confidence matches are not silently guessed: they go to a **human review queue**
+**The honest reading of that 1.00/1.00.** The gold set is not hand-labelled — it is built
+automatically from secondary-source records whose normalised name maps to exactly one
+canonical player. So the test proves the fuzzy path *recovers every link the exact path
+already gets right*: a real regression guard against the matcher breaking on easy cases,
+and **not** evidence of accuracy on the hard ones — transliteration variants, ambiguous
+names, missing birth years — which that construction excludes by definition. Measuring
+those needs hand-labelling, which is the obvious next piece of work.
+
+**Measurement is what found the one real bug in the ranker.** `reco-eval` originally
+reported a mean quality lift of just **+0.066**, and *negative* for strikers and
+defensive midfielders — the recommender was returning players slightly worse than league
+average while quality carried twice the nominal weight of value. The cause was that the
+two components were normalised against fixed ranges of very different usefulness: season
+ratings occupy only ~6.2–7.8 of the 5.5–8.5 window the quality scaler assumes, while the
+value scaler saturates at 2.0× — extremely common in these leagues. Value therefore had
+the **larger effective spread despite the smaller nominal weight**, so the ranker drifted
+toward cheap players, which are on average slightly worse ones. Ranking each component
+against the actual candidate pool instead makes effective weight equal nominal weight:
+
+| | Before | After |
+|---|---|---|
+| Mean quality lift | +0.066 | **+0.172** |
+| Roles below league average | 2 of 8 | **0 of 8** |
+| Role purity | 100% | 100% |
+
+Low-confidence matches are never silently guessed: they go to a **human review queue**
 (`scouting review`) with a manual override. A player with no published birthdate stays
 `NULL` rather than having one invented.
 

@@ -329,13 +329,52 @@
 
     <div class="tscroll">
       <table>
-        <thead><tr><th>Command</th><th>What it proves</th></tr></thead>
+        <thead><tr><th>Command</th><th>Measured — South African Premiership</th></tr></thead>
         <tbody>
-          <tr><td><b>scouting evaluate</b></td><td class="mut">DNA neighbours are <b>~40% closer in rating</b> than randomly sampled players — the embedding encodes real similarity, not noise</td></tr>
-          <tr><td><b>scouting er-eval</b></td><td class="mut"><b>Precision and recall</b> of entity resolution against a hand-built gold set of known matches</td></tr>
-          <tr><td><b>scouting reco-eval</b></td><td class="mut">Recommendation <b>role-purity</b> and <b>quality lift</b> — that the ranker returns the position asked for, and better players than chance</td></tr>
-          <tr><td><b>scouting chat-eval</b></td><td class="mut">The assistant <b>only cites players it retrieved</b> (hallucination check) and survives a <b>prompt-injection</b> case</td></tr>
-          <tr><td><b>scouting dq</b></td><td class="mut">Data-quality gate — nulls, ranges, duplicates, with caveats surfaced rather than imputed away</td></tr>
+          <tr><td><b>scouting evaluate</b></td><td class="mut">364 players, k=5. <b>Role purity 100%.</b> Neighbour rating gap <b>0.136 vs 0.235</b> random — DNA neighbours are <b>42% closer in rating</b> than chance.</td></tr>
+          <tr><td><b>scouting reco-eval</b></td><td class="mut"><b>Role purity 100%</b> across all 8 roles. <b>Mean quality lift +0.172</b> over the 6.74 league average, positive for every role.</td></tr>
+          <tr><td><b>scouting er-eval</b></td><td class="mut">470 gold pairs, <b>precision 1.00 / recall 1.00</b> — the caveat below matters more than the number.</td></tr>
+          <tr><td><b>scouting dq</b></td><td class="mut">595 players, <b>0 errors</b>, 3 warnings: 11.3% lack a birthdate, 10.6% a market value, 45% a height.</td></tr>
+          <tr><td><b>scouting chat-eval</b></td><td class="mut">The assistant <b>only cites players it retrieved</b> (hallucination check) and survives a <b>prompt-injection</b> case.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="dec" style="margin-top:30px">
+      <h3>The honest reading of that 1.00 / 1.00</h3>
+      <p>
+        The gold set is not hand-labelled — it is built automatically from records whose
+        normalised name maps to exactly one canonical player. So the test proves the fuzzy
+        path <i>recovers every link the exact path already gets right</i>: a real regression
+        guard, and <b>not</b> evidence of accuracy on the hard cases — transliteration
+        variants, ambiguous names, missing birth years — which that construction excludes by
+        definition. Measuring those needs hand-labelling, which is the obvious next work.
+      </p>
+    </div>
+
+    <div class="dec">
+      <h3>Measurement is what found the one real bug in the ranker</h3>
+      <p>
+        <code>reco-eval</code> originally reported a mean quality lift of just <b>+0.066</b>,
+        and <i>negative</i> for strikers and defensive midfielders — the recommender was
+        returning players slightly worse than league average, while quality carried twice the
+        nominal weight of value. The two components were normalised against fixed ranges of
+        very different usefulness: season ratings occupy only ~6.2–7.8 of the 5.5–8.5 window
+        the quality scaler assumes, while the value scaler saturates at 2.0×, which is
+        extremely common in these leagues. Value therefore had the <b>larger effective spread
+        despite the smaller nominal weight</b>, and the ranker drifted toward cheap players —
+        which are, on average, slightly worse ones. Ranking each component against the actual
+        candidate pool makes effective weight equal nominal weight.
+      </p>
+    </div>
+
+    <div class="tscroll" style="margin-top:22px">
+      <table>
+        <thead><tr><th></th><th>Before</th><th>After</th></tr></thead>
+        <tbody>
+          <tr><td><b>Mean quality lift</b></td><td class="mut">+0.066</td><td><b style="color:var(--green)">+0.172</b></td></tr>
+          <tr><td><b>Roles below league average</b></td><td class="mut">2 of 8</td><td><b style="color:var(--green)">0 of 8</b></td></tr>
+          <tr><td><b>Role purity</b></td><td class="mut">100%</td><td class="mut">100%</td></tr>
         </tbody>
       </table>
     </div>
