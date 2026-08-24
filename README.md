@@ -5,13 +5,33 @@
 
 ![The Scoutable dashboard: live counts and an opportunity board ranking players by the gap between market value and the model's fair value.](docs/img/dashboard.jpg)
 
-An **AI decision-support system for football recruitment**. Clubs have deep analytics for
-the Big Five European leagues and almost nothing for the leagues that actually produce
-cheap talent — so that is where the mispricing lives. Scoutable models **9,977 players
-across 17 leagues** in Africa, the Gulf and Asia-Pacific and answers the question a scout
-actually has: *who should we sign, for this budget, to play this way?*
+> ### What the model found this morning
+>
+> **Cristhoper Zambrano**, 22, centre-forward at Al-Taawoun FC in the Saudi Pro League.
+> The market prices him at **€250,000**. The model says he is worth **€2.01M** —
+> an **8.05× gap**, on a player rated 6.77 across a full season.
+>
+> He is one of **3,163 players the model currently flags as under-priced** out of 9,977.
+> Nobody had to look for him. The system surfaced him.
 
-It answers it with machine learning, not filters:
+That is the whole product in one paragraph: an **AI decision-support system for football
+recruitment**, aimed at the leagues the industry does not model.
+
+**Why those leagues.** Every European club scouts the Big Five to death, so nothing there
+is mispriced for long. Africa, the Gulf and Asia-Pacific are where the talent pipeline
+actually starts and where the data is worst — no per-90 stats, no consistent player ids,
+no valuation baseline. That absence *is* the opportunity: a club that can price those
+players before its rivals can buy a €2M player for €250k. A scouting department is
+expensive, slow, and can watch a few hundred players a season. This watches 9,977 and
+never stops.
+
+**What it replaces.** The honest alternative is a spreadsheet of scraped stats and a
+scout's memory. Filters can tell you who is under 23 and costs less than €500k. They
+cannot tell you who *plays like* the winger you just lost, or who is priced below what
+they are worth. Both of those are model questions — and they are the two questions
+recruitment actually turns on.
+
+## How the AI works
 
 | | |
 |---|---|
@@ -20,9 +40,28 @@ It answers it with machine learning, not filters:
 | **A ranking model, not a sort** | Recommendations blend **fit × quality × value** — embedding distance, peer-group percentile and model residual — and expose all three, so the decision stays contestable rather than being handed down as one opaque score. |
 | **A grounded RAG agent** | A tool-calling LLM that answers in plain English, **never writes SQL**, routes each question to one of seven retrieval tools, and cites every player by id — with an eval that fails if it cites a player it did not retrieve. |
 | **Semantic retrieval** | Reports are embedded **locally** (sentence-transformers MiniLM), so qualitative questions the SQL filters cannot express — *"an aggressive ball-winner who is under-priced"* — are still answerable, at no per-call cost. |
+| **Probabilistic entity resolution** | The three sources share **no common player id**. Linking them is blocking on birth year → **RapidFuzz** name scoring → a club crosswalk → a merged golden record carrying a **confidence score**. Everything above depends on this working: without it there is no player to embed. |
 
 The point is the last mile: turning 9,977 rows into a **defensible shortlist**, with the
 model's reasoning visible on every card so a human can overrule it.
+
+### How I know it works
+
+Anyone can ship a model. The part that makes it trustworthy is that **every claim above
+has a command that tests it** — measurement is built into the CLI, not done once in a
+notebook:
+
+| Command | What it proves |
+|---|---|
+| `scouting evaluate` | DNA neighbours are **~40% closer in rating** than randomly sampled players — the embedding encodes real similarity, not noise |
+| `scouting er-eval` | Entity-resolution **precision and recall** against a hand-built gold set of known player matches |
+| `scouting reco-eval` | Recommendation **role-purity** and **quality lift** — that the ranker returns the position asked for, and better players than chance |
+| `scouting chat-eval` | The assistant **only cites players it actually retrieved** (a hallucination check) and survives a **prompt-injection** case |
+| `scouting dq` | Data-quality gate: nulls, ranges, duplicates — with caveats surfaced rather than imputed away |
+
+Low-confidence matches are not silently guessed: they go to a **human review queue**
+(`scouting review`) with a manual override. A player with no published birthdate stays
+`NULL` rather than having one invented.
 
 Built end-to-end during my summer 2026 software-engineering internship at **OPTO Lab**:
 data pipeline, entity resolution, embeddings and models, the RAG agent, REST API, React

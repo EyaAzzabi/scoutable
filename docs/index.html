@@ -72,6 +72,28 @@
   .cta{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px}
   .note{font-size:13px;color:var(--faint);margin:0}
 
+  /* ---------- the find ---------- */
+  .find{
+    margin-top:36px;border:1px solid var(--line-strong);border-radius:14px;
+    background:var(--surface);padding:22px 26px;
+  }
+  .findrow{
+    display:flex;justify-content:space-between;gap:26px;flex-wrap:wrap;align-items:flex-end;
+    padding-bottom:16px;border-bottom:1px solid var(--line);
+  }
+  .findname{font-size:22px;font-weight:800;letter-spacing:-.025em;line-height:1.2}
+  .findmeta{font-size:13.5px;color:var(--muted);margin-top:5px}
+  .findnums{display:flex;gap:30px;flex-wrap:wrap}
+  .findnums>div{display:flex;flex-direction:column;gap:5px}
+  .fl{
+    font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--faint);
+  }
+  .fv{font-size:21px;font-weight:750;letter-spacing:-.02em;line-height:1}
+  .fv.green{color:var(--green)}
+  .fv.accent{color:var(--accent)}
+  .findnote{font-size:13.5px;color:var(--muted);margin:14px 0 0}
+
   .stats{
     display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--line);
     border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-top:54px;
@@ -209,12 +231,32 @@
     <p class="eyebrow">AI decision support for recruitment · OPTO Lab · Summer 2026</p>
     <h1>Scouting the leagues<br>nobody else models.</h1>
     <p class="lede">
-      Clubs have deep analytics for the Big Five European leagues and almost nothing for the
-      leagues that actually produce cheap talent — so that is where the mispricing lives.
-      Scoutable encodes <b>9,977 players across 17 leagues</b> as vector embeddings, prices
-      every one of them with a gradient-boosted model, and answers the question a scout
-      actually has: <b>who should we sign, for this budget, to play this way?</b>
+      Every European club scouts the Big Five to death, so nothing there stays mispriced.
+      Africa, the Gulf and Asia-Pacific are where the pipeline actually starts and where the
+      data is worst — and that absence <i>is</i> the opportunity. Scoutable encodes
+      <b>9,977 players across 17 leagues</b> as vector embeddings, prices every one of them
+      with a gradient-boosted model, and answers the question recruitment turns on:
+      <b>who should we sign, for this budget, to play this way?</b>
     </p>
+
+    <div class="find">
+      <p class="eyebrow" style="margin-bottom:10px">What the model found this morning</p>
+      <div class="findrow">
+        <div>
+          <div class="findname">Cristhoper Zambrano</div>
+          <div class="findmeta">Centre-Forward · 22 · Al-Taawoun FC · Saudi Pro League · rated 6.77</div>
+        </div>
+        <div class="findnums">
+          <div><span class="fl">Market</span><span class="fv">€250k</span></div>
+          <div><span class="fl">Model fair value</span><span class="fv green">€2.01M</span></div>
+          <div><span class="fl">Gap</span><span class="fv accent">8.05×</span></div>
+        </div>
+      </div>
+      <p class="findnote">
+        One of <b>3,163 players the model currently flags as under-priced</b> out of 9,977.
+        Nobody went looking for him — the system surfaced him.
+      </p>
+    </div>
     <div class="cta">
       <a class="btn primary" href="https://cam-pitch-discovery-extras.trycloudflare.com/">Open the live demo →</a>
       <a class="btn" href="https://github.com/EyaAzzabi/scoutable">Read the technical README</a>
@@ -272,10 +314,36 @@
         <p>Reports are embedded on-machine with sentence-transformers MiniLM, so qualitative questions the SQL filters cannot express — <i>"an aggressive ball-winner who is under-priced"</i> — are answerable at no per-call cost, and the notes never leave the box.</p>
       </div>
       <div class="cell">
-        <h3>Measured, not claimed</h3>
-        <p>DNA neighbours are verified <b>~40% closer in rating</b> than random players; entity resolution is scored against a hand-built gold set; the assistant is checked for citation grounding and prompt injection. Every model claim has a command that tests it.</p>
+        <h3>Probabilistic entity resolution</h3>
+        <p>The three sources share <b>no common player id</b>. Linking them is blocking on birth year → <b>RapidFuzz</b> name scoring → a club crosswalk → a merged golden record with a <b>confidence score</b>. Everything above depends on it: without it there is no player to embed.</p>
       </div>
     </div>
+
+    <div class="shead" style="margin:56px 0 24px">
+      <h2 style="font-size:clamp(22px,3vw,30px)">How I know it works.</h2>
+      <p class="lede">
+        Anyone can ship a model. What makes one trustworthy is that every claim above has a
+        command that tests it — measurement lives in the CLI, not in a notebook that ran once.
+      </p>
+    </div>
+
+    <div class="tscroll">
+      <table>
+        <thead><tr><th>Command</th><th>What it proves</th></tr></thead>
+        <tbody>
+          <tr><td><b>scouting evaluate</b></td><td class="mut">DNA neighbours are <b>~40% closer in rating</b> than randomly sampled players — the embedding encodes real similarity, not noise</td></tr>
+          <tr><td><b>scouting er-eval</b></td><td class="mut"><b>Precision and recall</b> of entity resolution against a hand-built gold set of known matches</td></tr>
+          <tr><td><b>scouting reco-eval</b></td><td class="mut">Recommendation <b>role-purity</b> and <b>quality lift</b> — that the ranker returns the position asked for, and better players than chance</td></tr>
+          <tr><td><b>scouting chat-eval</b></td><td class="mut">The assistant <b>only cites players it retrieved</b> (hallucination check) and survives a <b>prompt-injection</b> case</td></tr>
+          <tr><td><b>scouting dq</b></td><td class="mut">Data-quality gate — nulls, ranges, duplicates, with caveats surfaced rather than imputed away</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="cap" style="margin-top:16px">
+      Low-confidence matches are never silently guessed — they go to a human review queue with a manual override.
+      A player with no published birthdate stays NULL rather than having one invented.
+    </p>
   </div>
 </section>
 
