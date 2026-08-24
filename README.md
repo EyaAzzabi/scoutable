@@ -241,6 +241,15 @@ other feature keeps working.
 cosine distance in the embedding space, reported as a style-fit percentage, and every
 player carries the `[#id]` citation that the hallucination eval checks.*
 
+**What the citation eval does not prove.** Grounding shows the assistant never invented a
+player. It says nothing about whether the *right* player was retrieved — and a perfectly
+grounded answer built on a missed retrieval is still wrong. Measuring that needs
+relevance judgments this database does not have, so I worked the method out separately on
+public data in **[rag-eval-lab](https://github.com/EyaAzzabi/rag-eval-lab)**: BM25 versus
+dense versus rank fusion, scored on recall@k and nDCG against human judgments. The
+transferable result is that recall@3 tops out around 0.70 on a comparable corpus, which
+puts a hard ceiling on any RAG system's accuracy no matter how good its generator is.
+
 ### Accounts, plans & billing
 
 - Sign-up, sign-in, refresh, sign-out, an **active-session list with per-device
