@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Scoutable — football scouting platform</title>
-<meta name="description" content="A data-driven scouting platform for 17 under-scouted football leagues across Africa, the Gulf and Asia-Pacific. Data pipeline, entity resolution, player-DNA vector search, an XGBoost fair-value model and a grounded RAG assistant.">
-<meta property="og:title" content="Scoutable — football scouting platform">
-<meta property="og:description" content="Scouting and talent identification for 17 under-scouted leagues: 9,977 players, a fair-value model, DNA similarity search and a grounded assistant.">
+<title>Scoutable — AI scouting platform</title>
+<meta name="description" content="An AI decision-support system for football recruitment: player-DNA vector embeddings in pgvector, an XGBoost fair-value model, a fit-quality-value ranking model and a grounded RAG agent, over 9,977 players in 17 under-scouted leagues.">
+<meta property="og:title" content="Scoutable — AI scouting platform">
+<meta property="og:description" content="Vector embeddings, gradient-boosted valuation and a grounded RAG agent turn 9,977 players across 17 under-scouted leagues into a defensible shortlist.">
 <meta property="og:type" content="website">
 <style>
   :root{
@@ -206,13 +206,14 @@
 
 <div class="hero">
   <div class="wrap">
-    <p class="eyebrow">Summer 2026 internship · OPTO Lab</p>
+    <p class="eyebrow">AI decision support for recruitment · OPTO Lab · Summer 2026</p>
     <h1>Scouting the leagues<br>nobody else models.</h1>
     <p class="lede">
       Clubs have deep analytics for the Big Five European leagues and almost nothing for the
-      leagues that actually produce cheap talent. Scoutable covers <b>17 leagues across Africa,
-      the Gulf and Asia-Pacific</b> — and turns them into a searchable, rankable, explainable
-      recruitment desk.
+      leagues that actually produce cheap talent — so that is where the mispricing lives.
+      Scoutable encodes <b>9,977 players across 17 leagues</b> as vector embeddings, prices
+      every one of them with a gradient-boosted model, and answers the question a scout
+      actually has: <b>who should we sign, for this budget, to play this way?</b>
     </p>
     <div class="cta">
       <a class="btn primary" href="https://cam-pitch-discovery-extras.trycloudflare.com/">Open the live demo →</a>
@@ -232,7 +233,7 @@
 
 <section>
   <div class="wrap">
-    <div class="shot"><img src="img/dashboard.png" alt="Scoutable dashboard: live counts and an opportunity board ranking players by the gap between market value and the model's fair value." loading="lazy" width="2880" height="1800"></div>
+    <div class="shot"><img src="img/dashboard.jpg" alt="Scoutable dashboard: live counts and an opportunity board ranking players by the gap between market value and the model's fair value." loading="lazy" width="2880" height="1800"></div>
     <p class="cap">/dashboard — the opportunity board, ranked by how much money the model says is on the table.</p>
   </div>
 </section>
@@ -240,7 +241,48 @@
 <section>
   <div class="wrap">
     <div class="shead">
-      <p class="eyebrow dim">01 — What it does</p>
+      <p class="eyebrow dim">01 — The intelligence</p>
+      <h2>Embeddings, not filters.</h2>
+      <p class="lede">
+        A filter can tell you who is under 23 and costs less than €500k. It cannot tell you
+        who <i>plays like</i> the winger you just lost, or who is priced below what they are
+        worth. Both of those are model questions.
+      </p>
+    </div>
+
+    <div class="grid3">
+      <div class="cell">
+        <h3>Vector embeddings</h3>
+        <p>Every player is encoded as a <b>21-dimension "DNA" vector</b> and every scouting report as a <b>384-dimension text embedding</b>, both in <b>pgvector</b> behind <b>HNSW cosine indexes</b>. Playing style becomes geometry — so "who plays like this player" is a nearest-neighbour query, not a set of filters.</p>
+      </div>
+      <div class="cell">
+        <h3>Gradient-boosted valuation</h3>
+        <p>An <b>XGBoost</b> regressor predicts what each player <i>should</i> cost given age, role, output, minutes and league strength. The <b>residual</b> against the real market value is the arbitrage signal — it currently flags <b>3,163 under-priced players</b>.</p>
+      </div>
+      <div class="cell">
+        <h3>A ranking model, not a sort</h3>
+        <p>Recommendations blend <b>fit × quality × value</b> — embedding distance, peer-group percentile and model residual — and expose all three. The decision stays contestable instead of arriving as one opaque score.</p>
+      </div>
+      <div class="cell">
+        <h3>A grounded RAG agent</h3>
+        <p>A tool-calling LLM that answers in plain English, <b>never writes SQL</b>, routes each question to one of seven retrieval tools, and cites every player by id — with an eval that fails if it cites a player it did not actually retrieve.</p>
+      </div>
+      <div class="cell">
+        <h3>Local semantic retrieval</h3>
+        <p>Reports are embedded on-machine with sentence-transformers MiniLM, so qualitative questions the SQL filters cannot express — <i>"an aggressive ball-winner who is under-priced"</i> — are answerable at no per-call cost, and the notes never leave the box.</p>
+      </div>
+      <div class="cell">
+        <h3>Measured, not claimed</h3>
+        <p>DNA neighbours are verified <b>~40% closer in rating</b> than random players; entity resolution is scored against a hand-built gold set; the assistant is checked for citation grounding and prompt injection. Every model claim has a command that tests it.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="shead">
+      <p class="eyebrow dim">02 — What it does</p>
       <h2>Six surfaces, one model underneath.</h2>
       <p class="lede">Every board reads from the same golden records, the same DNA vectors and the same fair-value model. Plans decide which of them you can open.</p>
     </div>
@@ -286,7 +328,7 @@
           attached.
         </p>
       </div>
-      <div><div class="shot"><img src="img/free-agents.png" alt="Contract expiries board listing players by contract end date with free-agent status and value-for-money badges." loading="lazy"></div></div>
+      <div><div class="shot"><img src="img/free-agents.jpg" alt="Contract expiries board listing players by contract end date with free-agent status and value-for-money badges." loading="lazy"></div></div>
     </div>
 
     <div class="feat rev">
@@ -305,7 +347,12 @@
           <li>Redis tool cache: a repeat question goes <b>2,134 ms → 1.3 ms</b></li>
         </ul>
       </div>
-      <div><div class="shot"><img src="img/assistant.png" alt="The assistant workspace answering a scouting question with players cited by id." loading="lazy"></div></div>
+      <div><div class="shot"><img src="img/assistant.jpg" alt="The assistant answering &quot;Who plays most like Relebohile Mofokeng?&quot; — it routed the question to DNA similarity search and returned ranked look-alikes with style-fit percentages, each cited by player id." loading="lazy"></div></div>
+    </div>
+
+    <div style="margin-top:72px">
+      <div class="shot"><img src="img/players.jpg" alt="The player search grid: every card shows market value, the model's over- or under-priced verdict, and a confidence bar." loading="lazy"></div>
+      <p class="cap">/players — every card carries the model's verdict and the record's confidence, not just the market price.</p>
     </div>
   </div>
 </section>
@@ -313,7 +360,7 @@
 <section>
   <div class="wrap">
     <div class="shead">
-      <p class="eyebrow dim">02 — How the data gets there</p>
+      <p class="eyebrow dim">03 — How the data gets there</p>
       <h2>Three sources that share no identifier.</h2>
       <p class="lede">
         Each source is an isolated adapter that stores its verbatim payload in a raw zone first —
@@ -359,7 +406,7 @@ Sofascore ─────┘  (SourceRecord)  (Club/Player)  <b>resolution</b>  
 <section>
   <div class="wrap">
     <div class="shead">
-      <p class="eyebrow dim">03 — Decisions</p>
+      <p class="eyebrow dim">04 — Engineering decisions</p>
       <h2>The parts that were judgement, not typing.</h2>
     </div>
 
@@ -401,7 +448,7 @@ Sofascore ─────┘  (SourceRecord)  (Club/Player)  <b>resolution</b>  
 <section>
   <div class="wrap">
     <div class="shead">
-      <p class="eyebrow dim">04 — Stack</p>
+      <p class="eyebrow dim">05 — Stack</p>
       <h2>Python, Postgres and a lot of vectors.</h2>
     </div>
     <div class="stack">

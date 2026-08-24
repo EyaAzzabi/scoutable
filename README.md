@@ -1,20 +1,32 @@
-# Scoutable — football scouting & talent-identification platform
+# Scoutable — AI-powered football scouting & talent identification
 
 **Live demo → https://cam-pitch-discovery-extras.trycloudflare.com/**
 **Project page → https://eyaazzabi.github.io/scoutable/**
 
-![The Scoutable dashboard: live counts and an opportunity board ranking players by the gap between market value and the model's fair value.](docs/img/dashboard.png)
+![The Scoutable dashboard: live counts and an opportunity board ranking players by the gap between market value and the model's fair value.](docs/img/dashboard.jpg)
 
-A data-driven scouting platform for **under-scouted football markets**. Clubs and agents
-have deep analytics for the Big Five European leagues and almost nothing for the leagues
-that actually produce cheap talent. Scoutable covers **17 leagues across Africa, the Gulf
-and Asia-Pacific** — Algeria, Australia, China, Egypt, Ghana, India, Japan, Morocco,
-Nigeria, Qatar, Saudi Arabia, South Africa, South Korea, Thailand, Tunisia, UAE and
-Uzbekistan — and turns them into a searchable, rankable, explainable recruitment desk.
+An **AI decision-support system for football recruitment**. Clubs have deep analytics for
+the Big Five European leagues and almost nothing for the leagues that actually produce
+cheap talent — so that is where the mispricing lives. Scoutable models **9,977 players
+across 17 leagues** in Africa, the Gulf and Asia-Pacific and answers the question a scout
+actually has: *who should we sign, for this budget, to play this way?*
+
+It answers it with machine learning, not filters:
+
+| | |
+|---|---|
+| **Vector embeddings** | Every player is encoded as a **21-dimension "DNA" vector** and every scouting report as a **384-dimension text embedding**, both stored in **pgvector** behind **HNSW cosine indexes**. Playing style becomes geometry, so "who plays like this player" is a nearest-neighbour query rather than a set of filters. |
+| **Gradient-boosted valuation** | An **XGBoost** model predicts what each player *should* cost. The residual against the real market value is an arbitrage signal — it currently flags **3,163 under-priced players**. |
+| **A ranking model, not a sort** | Recommendations blend **fit × quality × value** — embedding distance, peer-group percentile and model residual — and expose all three, so the decision stays contestable rather than being handed down as one opaque score. |
+| **A grounded RAG agent** | A tool-calling LLM that answers in plain English, **never writes SQL**, routes each question to one of seven retrieval tools, and cites every player by id — with an eval that fails if it cites a player it did not retrieve. |
+| **Semantic retrieval** | Reports are embedded **locally** (sentence-transformers MiniLM), so qualitative questions the SQL filters cannot express — *"an aggressive ball-winner who is under-priced"* — are still answerable, at no per-call cost. |
+
+The point is the last mile: turning 9,977 rows into a **defensible shortlist**, with the
+model's reasoning visible on every card so a human can overrule it.
 
 Built end-to-end during my summer 2026 software-engineering internship at **OPTO Lab**:
-data pipeline, entity resolution, ML models, RAG assistant, REST API, React SPA,
-accounts/billing, and the containerised production deployment.
+data pipeline, entity resolution, embeddings and models, the RAG agent, REST API, React
+SPA, accounts/billing, and the containerised production deployment.
 
 > **The source code is private** — it belongs to OPTO Lab. This repository documents the
 > system and links to the running deployment.
@@ -105,7 +117,7 @@ under-priced players fall visibly below the diagonal. 3,163 players currently si
 Players whose contracts run out inside a chosen window, ranked by quality — the ones who
 can be signed for a fee of zero if you move before somebody else does.
 
-![The contract-expiries board, listing players by contract end date with free-agent status and value-for-money badges.](docs/img/free-agents.png)
+![The contract-expiries board, listing players by contract end date with free-agent status and value-for-money badges.](docs/img/free-agents.jpg)
 
 ### Shortlists
 
@@ -158,6 +170,12 @@ The assistant is provider-agnostic: it talks to any **OpenAI-compatible endpoint
 switching between Gemini, Groq, Mistral, OpenRouter or a local Ollama is a `.env` change
 rather than a code change. With no key configured it **disables itself cleanly** and every
 other feature keeps working.
+
+![The assistant answering "Who plays most like Relebohile Mofokeng?" — it routed the question to DNA similarity search and returned ranked look-alikes with style-fit percentages, each cited by player id.](docs/img/assistant.jpg)
+
+*Above: the question routed itself to **DNA similarity search**. The answer is ranked by
+cosine distance in the embedding space, reported as a style-fit percentage, and every
+player carries the `[#id]` citation that the hallucination eval checks.*
 
 ### Accounts, plans & billing
 
