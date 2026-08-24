@@ -1,7 +1,7 @@
 # Scoutable — AI-powered football scouting & talent identification
 
 **Project page → https://eyaazzabi.github.io/scoutable/** — always available, with screenshots
-**Live demo → https://explained-maternity-cst-miss.trycloudflare.com/** — hosted on demand; if it does not load, the project page has everything
+**Live demo → https://responsibilities-humanitarian-manitoba-eugene.trycloudflare.com/** — hosted on demand; if it does not load, the project page has everything
 
 ![The Scoutable dashboard: live counts and an opportunity board ranking players by the gap between market value and the model's fair value.](docs/img/dashboard.jpg)
 
